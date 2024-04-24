@@ -4,9 +4,9 @@ import torchvision.transforms.functional as TF
 import sys
 import os
 
-# from .double_conv import DoubleConv
-from .ghost_conv import GhostConv
-from .depthwise_seperable_conv import DepthwiseSeperableConv
+# Import AttentionConv2d and InvertedResidualBlock
+from attention_conv_2d import AttentionConv2d
+from .inverted_residual_block import InvertedResidualBlock
 
 
 class UNet(nn.Module):
@@ -23,14 +23,14 @@ class UNet(nn.Module):
         self.pool   = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.bottleneck = nn.Sequential(
-            GhostConv(512, 512 * 2),
-            DepthwiseSeperableConv(512 * 2, 512 *2)
+            AttentionConv2d(512, 512 * 2),
+            InvertedResidualBlock(512 * 2, 512 *2)
         )
 
-        self.downs.append(GhostConv(in_channels, 64)) # Ghost Convolution Block for downsampling
-        self.downs.append(GhostConv(64, 128))
-        self.downs.append(GhostConv(128, 256))
-        self.downs.append(GhostConv(256, 512))
+        self.downs.append(AttentionConv2d(in_channels, 64)) # Attention Convolution 2D Block for downsampling
+        self.downs.append(AttentionConv2d(64, 128))
+        self.downs.append(AttentionConv2d(128, 256))
+        self.downs.append(AttentionConv2d(256, 512))
 
         self.ups.append(
             nn.ConvTranspose2d(
@@ -41,7 +41,7 @@ class UNet(nn.Module):
             )
         )
 
-        self.ups.append(GhostConv(512 * 2, 512)) # Ghost Convolution Block for upsampling
+        self.ups.append(AttentionConv2d(512 * 2, 512)) #  Attention Convolution 2D Block for upsampling
         
         self.ups.append(
             nn.ConvTranspose2d(
@@ -52,7 +52,7 @@ class UNet(nn.Module):
             )
         )
 
-        self.ups.append(DepthwiseSeperableConv(256 * 2, 256)) # Depthwise Seperable Convolution Block for upsampling
+        self.ups.append(InvertedResidualBlock(256 * 2, 256)) # Inverted Residual Block for upsampling
         
         self.ups.append(
             nn.ConvTranspose2d(
@@ -63,7 +63,7 @@ class UNet(nn.Module):
             )
         )
 
-        self.ups.append(GhostConv(128 * 2, 128)) 
+        self.ups.append(AttentionConv2d(128 * 2, 128)) 
         
         self.ups.append(
             nn.ConvTranspose2d(
@@ -74,7 +74,7 @@ class UNet(nn.Module):
             )
         )
 
-        self.ups.append(DepthwiseSeperableConv(64 * 2, 64)) 
+        self.ups.append(InvertedResidualBlock(64 * 2, 64)) 
 
         self.final_conv = nn.Conv2d(64, out_channels, kernel_size=1)
 
